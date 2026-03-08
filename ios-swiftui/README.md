@@ -1,55 +1,52 @@
-# Phone App Analyzer - Native iOS (SwiftUI)
+# Never Forget Her - iOS App (SwiftUI)
 
-A native iOS app that analyzes installed applications for security, privacy, usage insights, and subscription tracking.
+A native iOS app for men who forget women's holidays, birthdays, and have trouble buying presents.
 
-## Requirements
+## What It Does
 
-- macOS with Xcode 15+ installed
-- iOS 17.0+ deployment target
-- Apple Developer account (for device testing)
+- Countdown timers to Valentine's Day, March 8th, her birthday, anniversary, Christmas, NYE
+- Add custom occasions (Mother's Day, etc.)
+- Wishlist manager — add her gift ideas with price, category, rating
+- AI Gift Advisor — pick occasion + budget tier, get 3 curated gift combos with pairings
+- Partner profile with her sizes (ring, clothing, shoe), interests
+- Push notifications at 30, 14, 7, 3, 1, and 0 days before each occasion
+- Panic-level urgency indicators so you know when to act
 
 ## Setup in Xcode
 
-1. **Open Xcode** → File → New → Project
-2. Select **iOS → App**
-3. Configure:
-   - Product Name: `PhoneAppAnalyzer`
-   - Interface: **SwiftUI**
-   - Language: **Swift**
-   - Minimum Deployment: **iOS 17.0**
-4. Click **Create**
+1. Open Xcode → File → New → Project → iOS → App
+2. Product Name: `NeverForgetHer`, Interface: SwiftUI, Language: Swift, iOS 17+
+3. Delete the auto-generated `ContentView.swift`
+4. Copy all `.swift` files from `NeverForgetHer/` into the project
+5. Add `Info.plist` to the project
+6. Build & Run (Cmd+R)
 
-5. **Delete** the auto-generated `ContentView.swift` file
+## Files
 
-6. **Copy all `.swift` files** from this `PhoneAppAnalyzer/` folder into your Xcode project:
-   - `PhoneApp.swift` — Data models and 19 sample apps
-   - `AppState.swift` — Shared observable state
-   - `PhoneAppAnalyzerApp.swift` — App entry point, welcome screen, tab navigation
-   - `DashboardView.swift` — Analytics dashboard with charts
-   - `AllAppsView.swift` — Browse/search/filter/sort all apps
-   - `SubscriptionsView.swift` — Subscription cost tracking
-   - `ManageView.swift` — Delete and restore apps
-   - `PrivacyView.swift` — Privacy score and permission analysis
-   - `SettingsView.swift` — Focus modes, toggles, sliders, RGB controls
+| File | What |
+|------|------|
+| `Models.swift` | Partner, Occasion, GiftIdea, GiftCategory, BudgetTier, GiftEngine |
+| `AppState.swift` | Shared store with persistence (UserDefaults) |
+| `NeverForgetHerApp.swift` | @main entry, onboarding setup, tab navigation |
+| `OccasionsView.swift` | Countdown cards, urgency colors, add custom occasions |
+| `WishlistView.swift` | Per-occasion gift lists, add/purchase/track |
+| `GiftAdvisorView.swift` | Budget picker, AI combo suggestions, add-to-wishlist |
+| `PartnerProfileView.swift` | Her profile, sizes, interests, stats |
+| `NotificationScheduler.swift` | Schedules iOS push notifications for all reminders |
+| `SettingsView.swift` | Notification config, data stats, pro tips, reset |
 
-7. **Important**: In `PhoneAppAnalyzerApp.swift`, the `@main` attribute marks the app entry point. If Xcode created its own app file, delete it or remove its `@main`.
+## Budget Tiers
 
-8. **Build & Run** (Cmd + R) on Simulator or your device.
+| Tier | Range |
+|------|-------|
+| Budget | Under $50 |
+| Moderate | $50-150 |
+| Generous | $150-300 |
+| Splurge | $300-500 |
+| All Out | $500+ |
 
-## Features
+Gift combos scale prices to your chosen tier and factor in her interests.
 
-| Tab | What it does |
-|-----|-------------|
-| **Dashboard** | Summary stats, security alerts, top-5 bar charts (screen time, battery, data, size, permissions), category breakdown |
-| **Apps** | Search bar, category filter chips, 6 sort options, expandable app cards with full details and color-coded permissions |
-| **Subscriptions** | Monthly/yearly cost totals, paid vs free breakdown, renewal dates |
-| **Manage** | Delete apps with confirmation, restore deleted apps, storage savings tracker |
-| **Privacy** | Privacy score (0-100), excessive permissions list, location tracking apps, microphone access apps |
-| **Settings** | 6 Focus modes, 10 quick toggles, brightness/volume/text sliders, Night Shift, True Tone, RGB color mixer |
+## No Dependencies
 
-## Architecture
-
-- **SwiftUI** declarative UI
-- **@StateObject / @EnvironmentObject** for shared state
-- **Custom `FlowLayout`** (iOS 16+ Layout protocol) for permission tags
-- No external dependencies — pure Apple frameworks
+Pure SwiftUI + Apple frameworks. No pods, no SPM packages.
