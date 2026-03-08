@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ios-shortcuts-generator"
+version = "1.0.0"
+description = "Programmatically generate Apple Shortcuts (.shortcut) files for iOS automation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+
+[project.scripts]
+shortcuts-gen = "shortcuts_generator.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["shortcuts_generator*"]
