@@ -140,6 +140,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
+
+            PermissionsView()
+                .tabItem {
+                    Label("Permissions", systemImage: "lock.shield.fill")
+                }
         }
     }
 }

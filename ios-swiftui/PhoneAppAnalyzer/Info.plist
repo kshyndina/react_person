@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Camera -->
+	<key>NSCameraUsageDescription</key>
+	<string>Phone App Analyzer needs camera access to analyze camera-using apps and demonstrate permission controls.</string>
+
+	<!-- Microphone -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Phone App Analyzer needs microphone access to analyze audio-using apps and demonstrate permission controls.</string>
+
+	<!-- Location -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Phone App Analyzer needs location access to analyze location-tracking apps on your device.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Phone App Analyzer needs always-on location access to fully analyze location-tracking behavior of installed apps.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Phone App Analyzer needs always-on location access to monitor location-tracking apps in the background.</string>
+
+	<!-- Contacts -->
+	<key>NSContactsUsageDescription</key>
+	<string>Phone App Analyzer needs contacts access to analyze which apps can read your contact list.</string>
+
+	<!-- Photos -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Phone App Analyzer needs photo library access to analyze storage usage and photo-accessing apps.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Phone App Analyzer needs permission to save analysis reports to your photo library.</string>
+
+	<!-- Calendar -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>Phone App Analyzer needs calendar access to analyze calendar-integrated apps.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Phone App Analyzer needs full calendar access to analyze calendar-integrated apps.</string>
+
+	<!-- Reminders -->
+	<key>NSRemindersUsageDescription</key>
+	<string>Phone App Analyzer needs reminders access to analyze reminder-integrated apps.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Phone App Analyzer needs full reminders access to analyze reminder-integrated apps.</string>
+
+	<!-- Bluetooth -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Phone App Analyzer needs Bluetooth access to detect Bluetooth-connected apps and peripherals.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Phone App Analyzer needs Bluetooth peripheral access for device analysis.</string>
+
+	<!-- Motion -->
+	<key>NSMotionUsageDescription</key>
+	<string>Phone App Analyzer needs motion data access to analyze fitness and motion-tracking apps.</string>
+
+	<!-- Health -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Phone App Analyzer needs to read health data to analyze which apps access your health information.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Phone App Analyzer needs to write health data to demonstrate health permission controls.</string>
+
+	<!-- Speech Recognition -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Phone App Analyzer needs speech recognition access to analyze voice-enabled apps.</string>
+
+	<!-- Face ID -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Phone App Analyzer uses Face ID to secure access to your app analysis data.</string>
+
+	<!-- Media Library -->
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Phone App Analyzer needs media library access to analyze music and media apps.</string>
+
+	<!-- NFC -->
+	<key>NFCReaderUsageDescription</key>
+	<string>Phone App Analyzer needs NFC access to analyze NFC-capable apps.</string>
+
+	<!-- Local Network -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Phone App Analyzer needs local network access to analyze network-connected apps.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
+
+	<!-- Tracking (ATT) -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Phone App Analyzer uses this to demonstrate app tracking transparency controls.</string>
+</dict>
+</plist>
