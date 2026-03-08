@@ -13,6 +13,10 @@ export const phoneApps = [
     dataUsageMB: 520,
     rating: 4.5,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 2,
@@ -28,6 +32,10 @@ export const phoneApps = [
     dataUsageMB: 340,
     rating: 4.3,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 3,
@@ -50,6 +58,10 @@ export const phoneApps = [
     dataUsageMB: 1200,
     rating: 4.1,
     riskLevel: 'high',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 4,
@@ -65,6 +77,11 @@ export const phoneApps = [
     dataUsageMB: 890,
     rating: 4.7,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Premium Family',
+      monthlyCost: 16.99,
+      renewDate: '2026-04-12',
+    },
   },
   {
     id: 5,
@@ -80,6 +97,10 @@ export const phoneApps = [
     dataUsageMB: 750,
     rating: 4.2,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 6,
@@ -95,6 +116,11 @@ export const phoneApps = [
     dataUsageMB: 2100,
     rating: 4.4,
     riskLevel: 'low',
+    subscription: {
+      plan: 'YouTube Premium',
+      monthlyCost: 13.99,
+      renewDate: '2026-03-28',
+    },
   },
   {
     id: 7,
@@ -110,6 +136,10 @@ export const phoneApps = [
     dataUsageMB: 180,
     rating: 4.6,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 8,
@@ -125,6 +155,11 @@ export const phoneApps = [
     dataUsageMB: 310,
     rating: 3.8,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'X Premium',
+      monthlyCost: 8.0,
+      renewDate: '2026-04-01',
+    },
   },
   {
     id: 9,
@@ -140,6 +175,10 @@ export const phoneApps = [
     dataUsageMB: 25,
     rating: 4.0,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 10,
@@ -155,6 +194,11 @@ export const phoneApps = [
     dataUsageMB: 15,
     rating: 4.1,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Premium',
+      monthlyCost: 2.99,
+      renewDate: '2026-03-15',
+    },
   },
   {
     id: 11,
@@ -170,6 +214,11 @@ export const phoneApps = [
     dataUsageMB: 95,
     rating: 4.2,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'Uber One',
+      monthlyCost: 9.99,
+      renewDate: '2026-04-05',
+    },
   },
   {
     id: 12,
@@ -185,6 +234,11 @@ export const phoneApps = [
     dataUsageMB: 45,
     rating: 4.3,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'Pro Annual',
+      monthlyCost: 4.99,
+      renewDate: '2026-09-01',
+    },
   },
   {
     id: 13,
@@ -200,6 +254,11 @@ export const phoneApps = [
     dataUsageMB: 10,
     rating: 4.5,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Pro',
+      monthlyCost: 3.99,
+      renewDate: '2026-05-20',
+    },
   },
   {
     id: 14,
@@ -215,6 +274,11 @@ export const phoneApps = [
     dataUsageMB: 3200,
     rating: 4.0,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Annual',
+      monthlyCost: 5.99,
+      renewDate: '2026-11-15',
+    },
   },
   {
     id: 15,
@@ -238,6 +302,10 @@ export const phoneApps = [
     dataUsageMB: 85,
     rating: 2.1,
     riskLevel: 'high',
+    subscription: {
+      plan: 'Free (Ad-supported)',
+      monthlyCost: 0,
+    },
   },
   {
     id: 16,
@@ -253,6 +321,11 @@ export const phoneApps = [
     dataUsageMB: 4500,
     rating: 4.6,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Standard',
+      monthlyCost: 15.49,
+      renewDate: '2026-03-22',
+    },
   },
   {
     id: 17,
@@ -268,6 +341,10 @@ export const phoneApps = [
     dataUsageMB: 210,
     rating: 4.3,
     riskLevel: 'low',
+    subscription: {
+      plan: 'Free',
+      monthlyCost: 0,
+    },
   },
   {
     id: 18,
@@ -283,5 +360,10 @@ export const phoneApps = [
     dataUsageMB: 650,
     rating: 3.9,
     riskLevel: 'medium',
+    subscription: {
+      plan: 'Game Pass',
+      monthlyCost: 14.99,
+      renewDate: '2026-04-10',
+    },
   },
 ];

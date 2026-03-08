@@ -1,5 +1,6 @@
 @use 'sass:color';
 
+/* stylelint-disable no-descending-specificity */
 // Phone App Analyzer Styles
 
 $bg-dark: #0f172a;
@@ -659,6 +660,421 @@ $border-color: #334155;
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+// Subscriptions Tab
+.Subscriptions {
+  max-width: 800px;
+  margin: 0 auto;
+
+  &__overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  &__cost-card {
+    background: $bg-card;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid $border-color;
+
+    > i {
+      font-size: 24px;
+      color: $accent-green;
+    }
+  }
+
+  &__cost-amount {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  &__cost-label {
+    color: $text-secondary;
+    font-size: 12px;
+  }
+
+  &__heading {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 24px 0 14px;
+
+    i {
+      margin-right: 6px;
+      color: $accent-blue;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__item {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  &__item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__plan {
+    display: block;
+    color: $text-secondary;
+    font-size: 13px;
+  }
+
+  &__item-right {
+    text-align: right;
+  }
+
+  &__price {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    color: $accent-green;
+  }
+
+  &__renew {
+    display: block;
+    color: $text-secondary;
+    font-size: 12px;
+  }
+
+  &__free-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__free-note {
+    color: $text-secondary;
+    font-size: 11px;
+    margin-left: 4px;
+  }
+}
+
+// App Manager Tab
+.AppManager {
+  max-width: 800px;
+  margin: 0 auto;
+
+  &__heading {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 24px 0 14px;
+
+    i {
+      margin-right: 6px;
+      color: $accent-blue;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__row {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    &--deleted {
+      opacity: 0.6;
+    }
+  }
+
+  &__row-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__row-right {
+    flex-shrink: 0;
+  }
+
+  &__app-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__meta {
+    color: $text-secondary;
+    font-size: 12px;
+  }
+
+  &__confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: $accent-red;
+  }
+}
+
+// Settings Tab
+.Settings {
+  max-width: 800px;
+  margin: 0 auto;
+
+  &__heading {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 24px 0 14px;
+
+    i {
+      margin-right: 6px;
+      color: $accent-blue;
+    }
+  }
+
+  &__focus-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  &__focus-card {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: $text-primary;
+
+    &:hover {
+      border-color: $accent-blue;
+    }
+
+    &--active {
+      border-color: $accent-green;
+      background: rgba($accent-green, 0.08);
+    }
+  }
+
+  &__focus-icon {
+    font-size: 28px;
+    color: $accent-blue;
+    margin-bottom: 4px;
+  }
+
+  &__focus-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &__focus-desc {
+    font-size: 11px;
+    color: $text-secondary;
+  }
+
+  &__toggles,
+  &__display {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    padding: 8px 0;
+    margin-bottom: 20px;
+  }
+
+  &__toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    i {
+      width: 20px;
+      text-align: center;
+      color: $accent-blue;
+    }
+  }
+
+  &__switch {
+    width: 48px;
+    height: 26px;
+    border-radius: 13px;
+    background: #555;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    padding: 0;
+
+    &--on {
+      background: $accent-green;
+    }
+  }
+
+  &__switch-knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+
+    .Settings__switch--on & {
+      transform: translateX(22px);
+    }
+  }
+
+  &__slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__slider-label {
+    min-width: 110px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+
+    i {
+      color: $accent-blue;
+      width: 20px;
+      text-align: center;
+    }
+  }
+
+  &__slider {
+    flex: 1;
+    accent-color: $accent-blue;
+    height: 4px;
+
+    &--red {
+      accent-color: $accent-red;
+    }
+
+    &--green {
+      accent-color: $accent-green;
+    }
+
+    &--blue {
+      accent-color: $accent-blue;
+    }
+  }
+
+  &__slider-val {
+    min-width: 45px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary;
+  }
+
+  &__rgb {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  &__rgb-preview {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  &__rgb-hex {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: monospace;
+    color: #fff;
+  }
+
+  &__rgb-sliders {
+    padding: 8px 0;
+  }
+
+  &__rgb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 18px;
+  }
+
+  &__rgb-label {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+    flex-shrink: 0;
+
+    &--red {
+      background: $accent-red;
+    }
+
+    &--green {
+      background: $accent-green;
+    }
+
+    &--blue {
+      background: $accent-blue;
+    }
+  }
 }
 
 // Responsive

@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { phoneApps } from '../../data/phoneApps';
 import { AppCard } from './AppCard';
 import { AnalysisDashboard } from './AnalysisDashboard';
+import { SubscriptionsTab } from './SubscriptionsTab';
+import { AppManagerTab } from './AppManagerTab';
+import { SettingsTab } from './SettingsTab';
 import './PhoneAppAnalyzer.scss';
 
 const SORT_OPTIONS = {
@@ -17,6 +20,39 @@ const SORT_OPTIONS = {
   },
 };
 
+const TABS = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: 'fa-chart-pie',
+  },
+  {
+    id: 'apps',
+    label: 'All Apps',
+    icon: 'fa-grip',
+  },
+  {
+    id: 'subscriptions',
+    label: 'Subscriptions',
+    icon: 'fa-credit-card',
+  },
+  {
+    id: 'manage',
+    label: 'Manage',
+    icon: 'fa-trash-can',
+  },
+  {
+    id: 'privacy',
+    label: 'Privacy',
+    icon: 'fa-shield-halved',
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: 'fa-gear',
+  },
+];
+
 export const PhoneAppAnalyzer = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +61,7 @@ export const PhoneAppAnalyzer = () => {
   const [expandedApp, setExpandedApp] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
+  const [deletedApps, setDeletedApps] = useState([]);
 
   const categories = useMemo(() => {
     const cats = [...new Set(phoneApps.map(app => app.category))].sort();
@@ -33,7 +70,7 @@ export const PhoneAppAnalyzer = () => {
   }, []);
 
   const filteredApps = useMemo(() => {
-    let result = [...phoneApps];
+    let result = [...phoneApps].filter(a => !deletedApps.includes(a.id));
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -52,7 +89,7 @@ export const PhoneAppAnalyzer = () => {
     result.sort(SORT_OPTIONS[sortBy]);
 
     return result;
-  }, [searchQuery, selectedCategory, sortBy]);
+  }, [searchQuery, selectedCategory, sortBy, deletedApps]);
 
   const handleScan = () => {
     setScanning(true);
@@ -60,6 +97,14 @@ export const PhoneAppAnalyzer = () => {
       setScanning(false);
       setScanned(true);
     }, 2500);
+  };
+
+  const handleDeleteApp = id => {
+    setDeletedApps(prev => [...prev, id]);
+  };
+
+  const handleRestoreApp = id => {
+    setDeletedApps(prev => prev.filter(x => x !== id));
   };
 
   if (!scanned) {
@@ -71,16 +116,17 @@ export const PhoneAppAnalyzer = () => {
             <div className="PhoneAppAnalyzer__phone-screen">
               <i
                 className={
-                  'fa-solid fa-mobile-screen-button ' +
-                  'PhoneAppAnalyzer__welcome-icon'
+                  'fa-solid' +
+                  ' fa-mobile-screen-button' +
+                  ' PhoneAppAnalyzer__welcome-icon'
                 }
               />
               <h1 className="PhoneAppAnalyzer__welcome-title">
                 Phone App Analyzer
               </h1>
               <p className="PhoneAppAnalyzer__welcome-text">
-                Scan your device to analyze installed apps, permissions, storage
-                usage, battery drain, and privacy risks.
+                Scan your device to analyze installed apps, subscriptions,
+                permissions, and phone settings.
               </p>
 
               {scanning ? (
@@ -119,48 +165,29 @@ export const PhoneAppAnalyzer = () => {
             Analyzer
           </h1>
           <span className="tag is-info is-medium">
-            {phoneApps.length} apps found
+            {phoneApps.length - deletedApps.length} apps
           </span>
         </div>
 
         <div className="tabs is-centered is-boxed PhoneAppAnalyzer__tabs">
           <ul>
-            <li className={activeTab === 'dashboard' ? 'is-active' : ''}>
-              <button
-                type="button"
-                className="PhoneAppAnalyzer__tab-btn"
-                onClick={() => setActiveTab('dashboard')}
+            {TABS.map(tab => (
+              <li
+                key={tab.id}
+                className={activeTab === tab.id ? 'is-active' : ''}
               >
-                <span className="icon">
-                  <i className="fa-solid fa-chart-pie" />
-                </span>
-                <span>Dashboard</span>
-              </button>
-            </li>
-            <li className={activeTab === 'apps' ? 'is-active' : ''}>
-              <button
-                type="button"
-                className="PhoneAppAnalyzer__tab-btn"
-                onClick={() => setActiveTab('apps')}
-              >
-                <span className="icon">
-                  <i className="fa-solid fa-grip" />
-                </span>
-                <span>All Apps</span>
-              </button>
-            </li>
-            <li className={activeTab === 'privacy' ? 'is-active' : ''}>
-              <button
-                type="button"
-                className="PhoneAppAnalyzer__tab-btn"
-                onClick={() => setActiveTab('privacy')}
-              >
-                <span className="icon">
-                  <i className="fa-solid fa-shield-halved" />
-                </span>
-                <span>Privacy Report</span>
-              </button>
-            </li>
+                <button
+                  type="button"
+                  className="PhoneAppAnalyzer__tab-btn"
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <span className="icon">
+                    <i className={`fa-solid ${tab.icon}`} />
+                  </span>
+                  <span>{tab.label}</span>
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       </header>
@@ -223,7 +250,8 @@ export const PhoneAppAnalyzer = () => {
             </div>
 
             <p className="PhoneAppAnalyzer__results-count">
-              Showing {filteredApps.length} of {phoneApps.length} apps
+              Showing {filteredApps.length} of{' '}
+              {phoneApps.length - deletedApps.length} apps
             </p>
 
             <div className="PhoneAppAnalyzer__app-list">
@@ -248,6 +276,17 @@ export const PhoneAppAnalyzer = () => {
           </div>
         )}
 
+        {activeTab === 'subscriptions' && <SubscriptionsTab apps={phoneApps} />}
+
+        {activeTab === 'manage' && (
+          <AppManagerTab
+            apps={phoneApps}
+            deletedApps={deletedApps}
+            onDeleteApp={handleDeleteApp}
+            onRestoreApp={handleRestoreApp}
+          />
+        )}
+
         {activeTab === 'privacy' && (
           <div className="PhoneAppAnalyzer__privacy">
             <div className="Dashboard__alert Dashboard__alert--info">
@@ -263,10 +302,7 @@ export const PhoneAppAnalyzer = () => {
                 )}
                 /100
               </h3>
-              <p>
-                Based on the number of permissions requested by your installed
-                apps.
-              </p>
+              <p>Based on permissions requested by your installed apps.</p>
             </div>
 
             <h2 className="PhoneAppAnalyzer__section-title">
@@ -295,13 +331,12 @@ export const PhoneAppAnalyzer = () => {
                     {app.riskLevel === 'high' ? (
                       <span className="has-text-danger">
                         <i className="fa-solid fa-circle-exclamation" />{' '}
-                        Recommend removing this app or revoking unnecessary
-                        permissions
+                        Recommend removing or restricting permissions
                       </span>
                     ) : (
                       <span className="has-text-warning-dark">
                         <i className="fa-solid fa-info-circle" /> Review if all
-                        permissions are necessary for this app
+                        permissions are necessary
                       </span>
                     )}
                   </p>
@@ -341,6 +376,8 @@ export const PhoneAppAnalyzer = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'settings' && <SettingsTab />}
       </main>
 
       <footer className="PhoneAppAnalyzer__footer">
