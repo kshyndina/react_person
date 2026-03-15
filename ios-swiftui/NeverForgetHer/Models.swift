@@ -7,23 +7,24 @@ struct Partner: Codable, Identifiable {
     var name: String
     var birthday: Date
     var anniversary: Date
-    var photoData: Data?
-    var interests: [String]  // e.g. ["jewelry", "books", "skincare", "travel"]
-    var sizes: PartnerSizes
+    var interests: [String]
+    var sizes: Sizes
 
-    static let sample = Partner(
-        name: "Kate",
-        birthday: Calendar.current.date(from: DateComponents(year: 1994, month: 7, day: 15))!,
-        anniversary: Calendar.current.date(from: DateComponents(year: 2021, month: 9, day: 3))!,
-        interests: ["jewelry", "skincare", "books", "travel", "flowers"],
-        sizes: PartnerSizes(ring: "6", clothing: "S", shoe: "7")
+    static let empty = Partner(
+        name: "",
+        birthday: Date(),
+        anniversary: Date(),
+        interests: [],
+        sizes: .empty
     )
 }
 
-struct PartnerSizes: Codable {
+struct Sizes: Codable {
     var ring: String
-    var clothing: String  // XS, S, M, L, XL
+    var clothing: String
     var shoe: String
+
+    static let empty = Sizes(ring: "", clothing: "", shoe: "")
 }
 
 // MARK: - Occasion
@@ -31,107 +32,116 @@ struct PartnerSizes: Codable {
 struct Occasion: Codable, Identifiable {
     var id = UUID()
     var name: String
-    var icon: String        // SF Symbol
-    var date: Date          // next occurrence
-    var isRecurring: Bool
+    var emoji: String
+    var date: Date
     var isCustom: Bool
-    var reminderDaysBefore: [Int]  // e.g. [30, 14, 7, 3, 1]
-    var budget: Double?
-    var giftIdeas: [GiftIdea]
-    var isPurchased: Bool
+    var reminderDays: [Int]
+    var budget: Double
+    var gifts: [Gift]
 
     var daysUntil: Int {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
-        var targetDate = cal.startOfDay(for: date)
-
-        // If the date has passed this year, move to next year
-        if targetDate < today {
-            if let nextYear = cal.date(byAdding: .year, value: 1, to: targetDate) {
-                targetDate = nextYear
-            }
+        var target = cal.startOfDay(for: date)
+        if target < today, let next = cal.date(byAdding: .year, value: 1, to: target) {
+            target = next
         }
-        return cal.dateComponents([.day], from: today, to: targetDate).day ?? 0
+        return max(0, cal.dateComponents([.day], from: today, to: target).day ?? 0)
     }
 
-    var urgencyLevel: UrgencyLevel {
-        if daysUntil <= 3 { return .critical }
-        if daysUntil <= 7 { return .urgent }
-        if daysUntil <= 14 { return .soon }
-        if daysUntil <= 30 { return .upcoming }
-        return .relaxed
+    var urgency: Urgency {
+        switch daysUntil {
+        case 0...1:  return .now
+        case 2...7:  return .thisWeek
+        case 8...14: return .twoWeeks
+        case 15...30: return .thisMonth
+        default:     return .plenty
+        }
     }
 
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM d"
-        return formatter.string(from: date)
+    var dateFormatted: String {
+        date.formatted(.dateTime.month(.wide).day())
+    }
+
+    var purchased: Bool {
+        !gifts.isEmpty && gifts.allSatisfy(\.bought)
+    }
+
+    var totalSpent: Double {
+        gifts.filter(\.bought).reduce(0) { $0 + $1.price }
     }
 }
 
-enum UrgencyLevel: String {
-    case critical = "NOW!"
-    case urgent = "This Week"
-    case soon = "2 Weeks"
-    case upcoming = "This Month"
-    case relaxed = "You're Good"
+enum Urgency {
+    case now, thisWeek, twoWeeks, thisMonth, plenty
 
-    var color: String {
+    var label: String {
         switch self {
-        case .critical: return "red"
-        case .urgent: return "orange"
-        case .soon: return "yellow"
-        case .upcoming: return "blue"
-        case .relaxed: return "green"
+        case .now:       return "Today"
+        case .thisWeek:  return "This Week"
+        case .twoWeeks:  return "Soon"
+        case .thisMonth: return "This Month"
+        case .plenty:    return "All Good"
+        }
+    }
+
+    var tint: String {
+        switch self {
+        case .now:       return "red"
+        case .thisWeek:  return "orange"
+        case .twoWeeks:  return "yellow"
+        case .thisMonth: return "blue"
+        case .plenty:    return "green"
         }
     }
 }
 
-// MARK: - Gift Idea
+// MARK: - Gift
 
-struct GiftIdea: Codable, Identifiable {
+struct Gift: Codable, Identifiable {
     var id = UUID()
     var name: String
     var category: GiftCategory
-    var priceEstimate: Double
-    var priceRange: String      // "$50-80"
+    var price: Double
     var url: String?
-    var notes: String
-    var isPurchased: Bool
-    var rating: Int             // 1-5 how much she'd like it
+    var note: String
+    var bought: Bool
+    var love: Int  // 1–5
 
-    var formattedPrice: String {
-        String(format: "$%.0f", priceEstimate)
+    var priceFormatted: String {
+        price < 1 ? "Free" : String(format: "$%.0f", price)
     }
 }
 
-enum GiftCategory: String, Codable, CaseIterable {
-    case jewelry = "Jewelry"
-    case flowers = "Flowers"
-    case skincare = "Skincare"
-    case clothing = "Clothing"
-    case experience = "Experience"
-    case tech = "Tech"
-    case books = "Books"
-    case food = "Food & Drink"
-    case home = "Home"
-    case travel = "Travel"
-    case custom = "Custom/DIY"
+enum GiftCategory: String, Codable, CaseIterable, Identifiable {
+    var id: String { rawValue }
+
+    case jewelry     = "Jewelry"
+    case flowers     = "Flowers"
+    case skincare    = "Skincare"
+    case clothing    = "Clothing"
+    case experience  = "Experience"
+    case tech        = "Tech"
+    case books       = "Books"
+    case food        = "Food & Drink"
+    case home        = "Home"
+    case travel      = "Travel"
+    case handmade    = "Handmade"
     case subscription = "Subscription"
 
     var icon: String {
         switch self {
-        case .jewelry: return "sparkles"
-        case .flowers: return "camera.macro"
-        case .skincare: return "drop.fill"
-        case .clothing: return "tshirt.fill"
-        case .experience: return "ticket.fill"
-        case .tech: return "desktopcomputer"
-        case .books: return "book.fill"
-        case .food: return "fork.knife"
-        case .home: return "house.fill"
-        case .travel: return "airplane"
-        case .custom: return "heart.fill"
+        case .jewelry:     return "sparkles"
+        case .flowers:     return "leaf.fill"
+        case .skincare:    return "drop.fill"
+        case .clothing:    return "tshirt.fill"
+        case .experience:  return "ticket.fill"
+        case .tech:        return "desktopcomputer"
+        case .books:       return "book.fill"
+        case .food:        return "fork.knife"
+        case .home:        return "house.fill"
+        case .travel:      return "airplane"
+        case .handmade:    return "heart.fill"
         case .subscription: return "arrow.clockwise"
         }
     }
@@ -139,266 +149,162 @@ enum GiftCategory: String, Codable, CaseIterable {
 
 // MARK: - Budget Tier
 
-enum BudgetTier: String, CaseIterable {
-    case budget = "Under $50"
-    case moderate = "$50 - $150"
-    case generous = "$150 - $300"
-    case splurge = "$300 - $500"
-    case allOut = "$500+"
+enum BudgetTier: String, CaseIterable, Identifiable {
+    var id: String { rawValue }
 
-    var range: ClosedRange<Double> {
+    case under50   = "Under $50"
+    case mid       = "$50–150"
+    case generous  = "$150–300"
+    case splurge   = "$300–500"
+    case allOut    = "$500+"
+
+    var max: Double {
         switch self {
-        case .budget: return 0...50
-        case .moderate: return 50...150
-        case .generous: return 150...300
-        case .splurge: return 300...500
-        case .allOut: return 500...10000
+        case .under50:  return 50
+        case .mid:      return 150
+        case .generous: return 300
+        case .splurge:  return 500
+        case .allOut:   return 5000
         }
     }
 
-    var icon: String {
+    var multiplier: Double {
         switch self {
-        case .budget: return "dollarsign"
-        case .moderate: return "dollarsign.circle"
-        case .generous: return "dollarsign.circle.fill"
-        case .splurge: return "star.circle.fill"
-        case .allOut: return "crown.fill"
+        case .under50:  return 0.3
+        case .mid:      return 0.7
+        case .generous: return 1.0
+        case .splurge:  return 1.6
+        case .allOut:   return 2.8
         }
     }
 }
 
-// MARK: - Gift Suggestion (AI-generated combos)
+// MARK: - Gift Suggestion
 
 struct GiftCombo: Identifiable {
     let id = UUID()
-    let occasionName: String
-    let tier: BudgetTier
-    let items: [SuggestedGift]
-    let totalPrice: Double
-    let reasoning: String
-
-    var formattedTotal: String {
-        String(format: "$%.0f", totalPrice)
-    }
+    let title: String
+    let subtitle: String
+    let items: [SuggestedItem]
+    var total: Double { items.reduce(0) { $0 + $1.price } }
 }
 
-struct SuggestedGift: Identifiable {
+struct SuggestedItem: Identifiable {
     let id = UUID()
     let name: String
     let category: GiftCategory
     let price: Double
-    let description: String
-    let pairsWellWith: String?
+    let detail: String
+    let pairsWith: String?
 }
 
-// MARK: - Sample Data
+// MARK: - Gift Engine
 
-func defaultOccasions() -> [Occasion] {
-    let cal = Calendar.current
-    let year = cal.component(.year, from: Date())
+enum GiftEngine {
+    static func suggest(occasion: Occasion, interests: [String], tier: BudgetTier) -> [GiftCombo] {
+        let m = tier.multiplier
+        let pool = buildPool(m: m, interests: interests)
 
-    return [
-        Occasion(
-            name: "Valentine's Day",
-            icon: "heart.fill",
-            date: cal.date(from: DateComponents(year: year, month: 2, day: 14))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [30, 14, 7, 3, 1],
-            budget: 200,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-        Occasion(
-            name: "International Women's Day",
-            icon: "figure.stand.dress",
-            date: cal.date(from: DateComponents(year: year, month: 3, day: 8))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [14, 7, 3, 1],
-            budget: 100,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-        Occasion(
-            name: "Her Birthday",
-            icon: "birthday.cake.fill",
-            date: cal.date(from: DateComponents(year: year, month: 7, day: 15))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [30, 14, 7, 3, 1],
-            budget: 300,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-        Occasion(
-            name: "Anniversary",
-            icon: "heart.circle.fill",
-            date: cal.date(from: DateComponents(year: year, month: 9, day: 3))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [30, 14, 7, 3, 1],
-            budget: 250,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-        Occasion(
-            name: "Christmas",
-            icon: "gift.fill",
-            date: cal.date(from: DateComponents(year: year, month: 12, day: 25))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [30, 14, 7, 3, 1],
-            budget: 300,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-        Occasion(
-            name: "New Year's Eve",
-            icon: "sparkles",
-            date: cal.date(from: DateComponents(year: year, month: 12, day: 31))!,
-            isRecurring: true,
-            isCustom: false,
-            reminderDaysBefore: [14, 7, 3],
-            budget: 150,
-            giftIdeas: [],
-            isPurchased: false
-        ),
-    ]
-}
-
-// MARK: - Sample Gift Suggestions Engine
-
-struct GiftEngine {
-
-    static func suggestCombos(for occasion: Occasion, interests: [String], budget: BudgetTier) -> [GiftCombo] {
-        let pool = giftPool(interests: interests, budget: budget)
-
-        // Generate 3 combo options
-        var combos: [GiftCombo] = []
-
-        // Combo 1: Classic romantic
-        let romantic = pickGifts(from: pool, categories: [.flowers, .jewelry, .food], budget: budget)
-        combos.append(GiftCombo(
-            occasionName: occasion.name,
-            tier: budget,
-            items: romantic,
-            totalPrice: romantic.reduce(0) { $0 + $1.price },
-            reasoning: "Classic romantic combo — flowers set the mood, jewelry makes it memorable, dinner seals the deal."
-        ))
-
-        // Combo 2: Experience-focused
-        let experiential = pickGifts(from: pool, categories: [.experience, .food, .skincare], budget: budget)
-        combos.append(GiftCombo(
-            occasionName: occasion.name,
-            tier: budget,
-            items: experiential,
-            totalPrice: experiential.reduce(0) { $0 + $1.price },
-            reasoning: "Experience over things — create memories together. Pair with pampering for the full effect."
-        ))
-
-        // Combo 3: Thoughtful personal
-        let thoughtful = pickGifts(from: pool, categories: [.books, .custom, .subscription], budget: budget)
-        combos.append(GiftCombo(
-            occasionName: occasion.name,
-            tier: budget,
-            items: thoughtful,
-            totalPrice: thoughtful.reduce(0) { $0 + $1.price },
-            reasoning: "Shows you actually pay attention to what she likes. Personal > expensive every time."
-        ))
-
-        return combos
+        return [
+            buildCombo(
+                title: "Classic Romance",
+                subtitle: "Can't go wrong with the classics",
+                pool: pool,
+                prefer: [.flowers, .jewelry, .food],
+                cap: tier.max, m: m
+            ),
+            buildCombo(
+                title: "Experience Together",
+                subtitle: "Memories over things",
+                pool: pool,
+                prefer: [.experience, .food, .skincare],
+                cap: tier.max, m: m
+            ),
+            buildCombo(
+                title: "Thoughtful & Personal",
+                subtitle: "Shows you actually pay attention",
+                pool: pool,
+                prefer: [.books, .handmade, .subscription, .home],
+                cap: tier.max, m: m
+            ),
+        ]
     }
 
-    private static func pickGifts(from pool: [SuggestedGift], categories: [GiftCategory], budget: BudgetTier) -> [SuggestedGift] {
-        var result: [SuggestedGift] = []
-        var remaining = budget.range.upperBound
+    private static func buildCombo(title: String, subtitle: String, pool: [SuggestedItem], prefer: [GiftCategory], cap: Double, m: Double) -> GiftCombo {
+        var picked: [SuggestedItem] = []
+        var left = cap
 
-        for cat in categories {
-            if let gift = pool.first(where: { $0.category == cat && $0.price <= remaining }) {
-                result.append(gift)
-                remaining -= gift.price
+        for cat in prefer {
+            if let item = pool.first(where: { $0.category == cat && $0.price <= left && !picked.contains(where: { $0.name == item.name }) }) {
+                picked.append(item)
+                left -= item.price
             }
         }
-        // Fill with anything that fits
-        if result.count < 2 {
-            for gift in pool where !result.contains(where: { $0.category == gift.category }) && gift.price <= remaining {
-                result.append(gift)
-                remaining -= gift.price
-                if result.count >= 3 { break }
+        if picked.count < 2 {
+            for item in pool where !picked.contains(where: { $0.category == item.category }) && item.price <= left {
+                picked.append(item)
+                left -= item.price
+                if picked.count >= 3 { break }
             }
         }
-        return result
+        return GiftCombo(title: title, subtitle: subtitle, items: picked)
     }
 
-    private static func giftPool(interests: [String], budget: BudgetTier) -> [SuggestedGift] {
-        let multiplier: Double = {
-            switch budget {
-            case .budget: return 0.3
-            case .moderate: return 0.6
-            case .generous: return 1.0
-            case .splurge: return 1.5
-            case .allOut: return 2.5
-            }
-        }()
-
-        var gifts: [SuggestedGift] = [
-            SuggestedGift(name: "Red Roses Bouquet", category: .flowers, price: 45 * multiplier,
-                         description: "Classic long-stem red roses, 2 dozen", pairsWellWith: "Jewelry"),
-            SuggestedGift(name: "Peony & Ranunculus Arrangement", category: .flowers, price: 65 * multiplier,
-                         description: "Seasonal premium arrangement in a vase", pairsWellWith: "Chocolate"),
-            SuggestedGift(name: "Gold Pendant Necklace", category: .jewelry, price: 120 * multiplier,
-                         description: "14k gold with small diamond pendant", pairsWellWith: "Flowers"),
-            SuggestedGift(name: "Tennis Bracelet", category: .jewelry, price: 180 * multiplier,
-                         description: "Sterling silver with cubic zirconia", pairsWellWith: "Dinner"),
-            SuggestedGift(name: "Spa Day Package", category: .experience, price: 150 * multiplier,
-                         description: "Full day couples spa with massage and facial", pairsWellWith: "Dinner"),
-            SuggestedGift(name: "Concert Tickets", category: .experience, price: 130 * multiplier,
-                         description: "Two tickets to her favorite artist", pairsWellWith: "Dinner"),
-            SuggestedGift(name: "Weekend Getaway", category: .travel, price: 250 * multiplier,
-                         description: "2-night boutique hotel stay", pairsWellWith: "Spa Day"),
-            SuggestedGift(name: "Luxury Skincare Set", category: .skincare, price: 85 * multiplier,
-                         description: "La Mer or Drunk Elephant gift set", pairsWellWith: "Candles"),
-            SuggestedGift(name: "Silk Pajama Set", category: .clothing, price: 95 * multiplier,
-                         description: "Premium silk PJs, monogrammable", pairsWellWith: "Skincare"),
-            SuggestedGift(name: "Cashmere Scarf", category: .clothing, price: 110 * multiplier,
-                         description: "100% cashmere in her favorite color", pairsWellWith: "Gloves"),
-            SuggestedGift(name: "Dyson Airwrap", category: .tech, price: 200 * multiplier,
-                         description: "Multi-styler for all hair types", pairsWellWith: "Skincare"),
-            SuggestedGift(name: "Kindle Paperwhite", category: .tech, price: 80 * multiplier,
-                         description: "Latest model, waterproof", pairsWellWith: "Book subscription"),
-            SuggestedGift(name: "Book by Her Favorite Author", category: .books, price: 25 * multiplier,
-                         description: "Signed first edition or special release", pairsWellWith: "Candle & blanket"),
-            SuggestedGift(name: "Fine Dining Reservation", category: .food, price: 100 * multiplier,
-                         description: "Tasting menu at a top-rated restaurant", pairsWellWith: "Flowers"),
-            SuggestedGift(name: "Artisan Chocolate Box", category: .food, price: 40 * multiplier,
-                         description: "Hand-crafted Belgian chocolates, 24pc", pairsWellWith: "Wine"),
-            SuggestedGift(name: "Custom Photo Book", category: .custom, price: 60 * multiplier,
-                         description: "Hardcover photo book of your best moments together", pairsWellWith: "Handwritten letter"),
-            SuggestedGift(name: "Handwritten Love Letter", category: .custom, price: 5 * multiplier,
-                         description: "On nice stationery with a wax seal", pairsWellWith: "Anything"),
-            SuggestedGift(name: "Book of the Month Club", category: .subscription, price: 50 * multiplier,
-                         description: "6-month subscription", pairsWellWith: "Kindle"),
-            SuggestedGift(name: "Fresh Flower Subscription", category: .subscription, price: 45 * multiplier,
-                         description: "Monthly premium bouquet delivery, 3 months", pairsWellWith: "Vase"),
-            SuggestedGift(name: "Luxury Candle Set", category: .home, price: 55 * multiplier,
-                         description: "Diptyque or Jo Malone trio", pairsWellWith: "Bath set"),
+    private static func buildPool(m: Double, interests: [String]) -> [SuggestedItem] {
+        var pool: [SuggestedItem] = [
+            .init(name: "Long-Stem Roses", category: .flowers, price: r(50, m), detail: "Two dozen red, hand-tied", pairsWith: "Dinner"),
+            .init(name: "Seasonal Bouquet", category: .flowers, price: r(40, m), detail: "Peonies & ranunculus in a ceramic vase", pairsWith: "Chocolate"),
+            .init(name: "Gold Pendant Necklace", category: .jewelry, price: r(130, m), detail: "14k gold, small diamond", pairsWith: "Flowers"),
+            .init(name: "Pearl Stud Earrings", category: .jewelry, price: r(90, m), detail: "Freshwater pearl, classic", pairsWith: "Necklace"),
+            .init(name: "Couples Spa Day", category: .experience, price: r(160, m), detail: "Full day — massage, facial, sauna", pairsWith: "Dinner out"),
+            .init(name: "Concert Tickets", category: .experience, price: r(140, m), detail: "Two tickets to her favorite artist", pairsWith: "Dinner"),
+            .init(name: "Fine Dining", category: .food, price: r(110, m), detail: "Tasting menu at a top restaurant", pairsWith: "Flowers"),
+            .init(name: "Artisan Chocolates", category: .food, price: r(45, m), detail: "Hand-crafted Belgian, 24 piece", pairsWith: "Wine"),
+            .init(name: "Luxury Skincare Set", category: .skincare, price: r(90, m), detail: "Drunk Elephant or La Mer gift set", pairsWith: "Candles"),
+            .init(name: "Silk Pajama Set", category: .clothing, price: r(100, m), detail: "Premium silk, monogrammable", pairsWith: "Skincare"),
+            .init(name: "Cashmere Scarf", category: .clothing, price: r(120, m), detail: "100% cashmere, her favorite color", pairsWith: "Gloves"),
+            .init(name: "Kindle Paperwhite", category: .tech, price: r(85, m), detail: "Latest model, waterproof", pairsWith: "Book subscription"),
+            .init(name: "Dyson Airwrap", category: .tech, price: r(220, m), detail: "Multi-styler, all hair types", pairsWith: "Skincare set"),
+            .init(name: "Her Favorite Author", category: .books, price: r(28, m), detail: "Special edition or signed copy", pairsWith: "Candle + blanket"),
+            .init(name: "Photo Book", category: .handmade, price: r(65, m), detail: "Hardcover book of your best moments", pairsWith: "Handwritten letter"),
+            .init(name: "Love Letter", category: .handmade, price: r(5, m), detail: "On nice stationery, wax-sealed", pairsWith: "Anything"),
+            .init(name: "Jo Malone Candle Set", category: .home, price: r(60, m), detail: "Trio of luxury scented candles", pairsWith: "Bath set"),
+            .init(name: "Book of the Month", category: .subscription, price: r(55, m), detail: "6-month subscription", pairsWith: "Kindle"),
+            .init(name: "Flower Subscription", category: .subscription, price: r(50, m), detail: "Monthly bouquet, 3 months", pairsWith: "Vase"),
+            .init(name: "Weekend Getaway", category: .travel, price: r(280, m), detail: "2 nights at a boutique hotel", pairsWith: "Spa"),
         ]
 
-        // Boost gifts matching her interests
-        if interests.contains("jewelry") {
-            gifts.append(SuggestedGift(name: "Pearl Earrings", category: .jewelry, price: 90 * multiplier,
-                                      description: "Freshwater pearl studs, classic elegance", pairsWellWith: "Necklace"))
+        if interests.contains("skincare") {
+            pool.append(.init(name: "LED Face Mask", category: .skincare, price: r(160, m), detail: "Professional LED therapy at home", pairsWith: "Serum set"))
         }
         if interests.contains("travel") {
-            gifts.append(SuggestedGift(name: "Luxury Luggage Tag Set", category: .travel, price: 45 * multiplier,
-                                      description: "Personalized leather luggage tags", pairsWellWith: "Weekend trip"))
+            pool.append(.init(name: "Leather Luggage Tags", category: .travel, price: r(50, m), detail: "Personalized, hand-stitched", pairsWith: "Weekend trip"))
         }
-        if interests.contains("skincare") {
-            gifts.append(SuggestedGift(name: "LED Face Mask", category: .skincare, price: 150 * multiplier,
-                                      description: "Professional LED therapy mask", pairsWellWith: "Serum set"))
+        if interests.contains("wine") {
+            pool.append(.init(name: "Wine Tasting", category: .experience, price: r(95, m), detail: "Private tasting for two at a local vineyard", pairsWith: "Cheese board"))
         }
 
-        return gifts.sorted { $0.price < $1.price }
+        return pool.sorted { $0.price < $1.price }
     }
+
+    private static func r(_ base: Double, _ m: Double) -> Double {
+        (base * m).rounded(.toNearestOrEven)
+    }
+}
+
+// MARK: - Default Occasions
+
+func makeDefaultOccasions() -> [Occasion] {
+    let cal = Calendar.current
+    let y = cal.component(.year, from: Date())
+    func d(_ month: Int, _ day: Int) -> Date {
+        cal.date(from: DateComponents(year: y, month: month, day: day))!
+    }
+    return [
+        Occasion(name: "Valentine's Day", emoji: "heart.fill", date: d(2,14), isCustom: false, reminderDays: [30,14,7,3,1], budget: 200, gifts: []),
+        Occasion(name: "Women's Day", emoji: "figure.stand.dress", date: d(3,8), isCustom: false, reminderDays: [14,7,3,1], budget: 100, gifts: []),
+        Occasion(name: "Her Birthday", emoji: "birthday.cake.fill", date: d(7,15), isCustom: false, reminderDays: [30,14,7,3,1], budget: 300, gifts: []),
+        Occasion(name: "Anniversary", emoji: "heart.circle.fill", date: d(9,3), isCustom: false, reminderDays: [30,14,7,3,1], budget: 250, gifts: []),
+        Occasion(name: "Christmas", emoji: "gift.fill", date: d(12,25), isCustom: false, reminderDays: [30,14,7,3,1], budget: 300, gifts: []),
+    ]
 }

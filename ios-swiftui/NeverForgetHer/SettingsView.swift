@@ -1,155 +1,102 @@
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
-    @EnvironmentObject var store: AppStore
-    @State private var dailyReminder = true
-    @State private var reminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
-    @State private var showResetConfirm = false
+    @EnvironmentObject var store: Store
+    @State private var showReset = false
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "heart.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundStyle(.pink)
-                        VStack(alignment: .leading) {
-                            Text("Never Forget Her")
-                                .font(.headline)
-                            Text("v1.0 — Built with love (and panic)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
+                // Notifications
                 Section("Notifications") {
-                    Toggle("Daily Reminder", isOn: $dailyReminder)
-                        .onChange(of: dailyReminder) { _, newValue in
-                            if newValue {
-                                NotificationScheduler.scheduleDailyCheck(partnerName: store.partner.name)
-                            } else {
-                                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["daily-check"])
-                            }
-                        }
-
-                    DatePicker("Reminder Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    Button {
+                        Notifier.requestPermission()
+                        Notifier.scheduleAll(store.occasions, name: store.partner.name)
+                    } label: {
+                        Label("Reschedule All Reminders", systemImage: "bell.badge")
+                    }
 
                     Button {
-                        NotificationScheduler.requestPermission()
-                        NotificationScheduler.scheduleAll(occasions: store.occasions, partnerName: store.partner.name)
-                    } label: {
-                        Label("Re-schedule All Reminders", systemImage: "bell.badge.fill")
-                    }
-                }
-
-                Section("Reminder Schedule") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ReminderRow(days: "30 days before", desc: "Heads up — start thinking")
-                        ReminderRow(days: "14 days before", desc: "Time to start shopping")
-                        ReminderRow(days: "7 days before", desc: "Order now for delivery")
-                        ReminderRow(days: "3 days before", desc: "Wrapping time")
-                        ReminderRow(days: "1 day before", desc: "LAST CHANCE")
-                        ReminderRow(days: "Day of", desc: "Did you remember?!")
-                    }
-                }
-
-                Section("Data") {
-                    HStack {
-                        Text("Occasions")
-                        Spacer()
-                        Text("\(store.occasions.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                    HStack {
-                        Text("Gift Ideas")
-                        Spacer()
-                        Text("\(store.allGiftIdeas.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                    HStack {
-                        Text("Total Budget")
-                        Spacer()
-                        Text(String(format: "$%.0f", store.totalBudget))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section("Danger Zone") {
-                    Button(role: .destructive) {
-                        showResetConfirm = true
-                    } label: {
-                        Label("Reset All Data", systemImage: "trash.fill")
-                            .foregroundStyle(.red)
-                    }
-                }
-
-                Section {
-                    VStack(spacing: 8) {
-                        Text("Pro tips for not being in the doghouse:")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            TipRow(text: "Flowers are never wrong as a backup")
-                            TipRow(text: "Card + handwritten note > expensive gift with no card")
-                            TipRow(text: "\"I forgot\" is never an acceptable answer")
-                            TipRow(text: "When in doubt: jewelry + dinner reservation")
-                            TipRow(text: "Screenshot her Pinterest for easy wishlist mining")
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
                         }
+                    } label: {
+                        Label("Notification Settings", systemImage: "gear")
                     }
-                    .padding(.vertical, 4)
+                }
+
+                // Reminder timeline
+                Section("Reminder Timeline") {
+                    reminder("30 days before", "Start thinking")
+                    reminder("14 days before", "Time to shop")
+                    reminder("7 days before", "Order for delivery")
+                    reminder("3 days before", "Wrap it up")
+                    reminder("1 day before", "LAST CHANCE")
+                    reminder("Day of", "Did you remember?!")
+                }
+
+                // Data
+                Section("Your Data") {
+                    row("Occasions", "\(store.occasions.count)")
+                    row("Gift Ideas", "\(store.allGifts.count)")
+                    row("Total Budget", String(format: "$%.0f", store.totalBudget))
+                    row("Spent So Far", String(format: "$%.0f", store.totalSpent))
+                }
+
+                // Tips
+                Section("Survival Guide") {
+                    tip("Flowers are never wrong as a backup plan")
+                    tip("A card with a real note > expensive gift, no card")
+                    tip("\"I forgot\" is not an acceptable answer")
+                    tip("When in doubt: jewelry + dinner reservation")
+                    tip("Screenshot her Pinterest for easy wishlist intel")
+                    tip("Set reminders 30 days out — shipping takes time")
+                }
+
+                // Reset
+                Section {
+                    Button(role: .destructive) { showReset = true } label: {
+                        Label("Reset Everything", systemImage: "trash")
+                    }
                 }
             }
             .navigationTitle("Settings")
-            .alert("Reset Everything?", isPresented: $showResetConfirm) {
+            .alert("Reset all data?", isPresented: $showReset) {
                 Button("Cancel", role: .cancel) {}
-                Button("Reset", role: .destructive) {
-                    store.partner = Partner.sample
-                    store.occasions = defaultOccasions()
-                    store.hasCompletedSetup = false
-                    store.save()
-                }
+                Button("Reset", role: .destructive) { store.reset() }
             } message: {
-                Text("This will delete all occasions, gift ideas, and her profile. You'll go through setup again.")
+                Text("This deletes all occasions, gifts, and her profile.")
             }
         }
     }
-}
 
-struct ReminderRow: View {
-    let days: String
-    let desc: String
-
-    var body: some View {
+    @ViewBuilder
+    private func reminder(_ when: String, _ what: String) -> some View {
         HStack {
-            Image(systemName: "bell.fill")
-                .font(.caption2)
-                .foregroundStyle(.pink)
-            Text(days)
-                .font(.caption)
-                .fontWeight(.medium)
+            Text(when)
+                .font(.subheadline)
             Spacer()
-            Text(desc)
+            Text(what)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
-}
 
-struct TipRow: View {
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 6) {
-            Image(systemName: "lightbulb.fill")
-                .font(.caption2)
-                .foregroundStyle(.yellow)
-            Text(text)
-                .font(.caption)
+    @ViewBuilder
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    @ViewBuilder
+    private func tip(_ text: String) -> some View {
+        Label(text, systemImage: "lightbulb")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
     }
 }

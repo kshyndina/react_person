@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSUserNotificationUsageDescription</key>
-	<string>Never Forget Her needs notifications to remind you about upcoming holidays, birthdays, and anniversaries.</string>
+	<key>UIUserNotificationSettings</key>
+	<dict/>
 </dict>
 </plist>

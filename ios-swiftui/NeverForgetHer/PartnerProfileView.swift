@@ -1,201 +1,169 @@
 import SwiftUI
 
 struct PartnerProfileView: View {
-    @EnvironmentObject var store: AppStore
-    @State private var isEditing = false
+    @EnvironmentObject var store: Store
+    @State private var editing = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Avatar
-                    VStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(LinearGradient(
-                                    colors: [.pink, .purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                                .frame(width: 100, height: 100)
-
-                            Text(String(store.partner.name.prefix(1)).uppercased())
-                                .font(.system(size: 44, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-
-                        Text(store.partner.name)
-                            .font(.title)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.top)
-
-                    // Key dates
-                    VStack(spacing: 0) {
-                        ProfileInfoRow(icon: "birthday.cake.fill", label: "Birthday",
-                                      value: formatted(store.partner.birthday), color: .pink)
-                        Divider().padding(.leading, 50)
-                        ProfileInfoRow(icon: "heart.circle.fill", label: "Anniversary",
-                                      value: formatted(store.partner.anniversary), color: .red)
-                    }
-                    .background(Color(.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(color: .black.opacity(0.03), radius: 3)
-                    .padding(.horizontal)
-
-                    // Sizes
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("Her Sizes", systemImage: "ruler.fill")
-                            .font(.headline)
-
-                        HStack(spacing: 16) {
-                            SizeChip(label: "Ring", value: store.partner.sizes.ring)
-                            SizeChip(label: "Clothing", value: store.partner.sizes.clothing)
-                            SizeChip(label: "Shoe", value: store.partner.sizes.shoe)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Interests
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("Interests", systemImage: "sparkles")
-                            .font(.headline)
-
-                        if store.partner.interests.isEmpty {
-                            Text("No interests added yet")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            FlowLayout(spacing: 8) {
-                                ForEach(store.partner.interests, id: \.self) { interest in
-                                    Text(interest.capitalized)
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 7)
-                                        .background(Color.pink.opacity(0.12))
-                                        .foregroundStyle(.pink)
-                                        .clipShape(Capsule())
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Stats
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("Gift Stats", systemImage: "chart.bar.fill")
-                            .font(.headline)
-
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                            ProfileStatCard(
-                                value: "\(store.occasions.count)",
-                                label: "Occasions",
-                                icon: "calendar",
-                                color: .blue
-                            )
-                            ProfileStatCard(
-                                value: "\(store.allGiftIdeas.count)",
-                                label: "Gift Ideas",
-                                icon: "lightbulb.fill",
-                                color: .yellow
-                            )
-                            ProfileStatCard(
-                                value: String(format: "$%.0f", store.totalBudget),
-                                label: "Total Budget",
-                                icon: "dollarsign.circle.fill",
-                                color: .green
-                            )
-                            ProfileStatCard(
-                                value: String(format: "$%.0f", store.totalSpent),
-                                label: "Spent",
-                                icon: "cart.fill",
-                                color: .purple
-                            )
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    Spacer(minLength: 30)
+                    avatar
+                    dates
+                    sizes
+                    interests
+                    stats
                 }
+                .padding()
+                .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Her Profile")
+            .navigationTitle(store.partner.name)
             .toolbar {
-                Button {
-                    isEditing = true
-                } label: {
-                    Text("Edit")
-                }
+                Button("Edit") { editing = true }
             }
-            .sheet(isPresented: $isEditing) {
+            .sheet(isPresented: $editing) {
                 EditPartnerSheet()
             }
         }
     }
 
-    private func formatted(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .long
-        return f.string(from: date)
+    // MARK: - Avatar
+
+    private var avatar: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(colors: [.pink, .purple.opacity(0.7)],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .frame(width: 88, height: 88)
+
+                Text(String(store.partner.name.prefix(1)).uppercased())
+                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+
+            Text(store.partner.name)
+                .font(.title2)
+                .fontWeight(.bold)
+        }
+        .padding(.top, 8)
     }
-}
 
-// MARK: - Components
+    // MARK: - Dates
 
-struct ProfileInfoRow: View {
-    let icon: String
-    let label: String
-    let value: String
-    let color: Color
+    private var dates: some View {
+        VStack(spacing: 0) {
+            infoRow(icon: "birthday.cake.fill", label: "Birthday",
+                    value: store.partner.birthday.formatted(.dateTime.month(.wide).day()), color: .pink)
+            Divider().padding(.leading, 48)
+            infoRow(icon: "heart.circle.fill", label: "Anniversary",
+                    value: store.partner.anniversary.formatted(.dateTime.month(.wide).day()), color: .red)
+        }
+        .background(.background, in: RoundedRectangle(cornerRadius: 12))
+    }
 
-    var body: some View {
-        HStack(spacing: 14) {
+    @ViewBuilder
+    private func infoRow(icon: String, label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 12) {
             Image(systemName: icon)
                 .foregroundStyle(color)
-                .frame(width: 28)
-            VStack(alignment: .leading) {
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 1) {
                 Text(label)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Text(value)
+                    .font(.subheadline)
                     .fontWeight(.medium)
             }
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
-}
 
-struct SizeChip: View {
-    let label: String
-    let value: String
+    // MARK: - Sizes
 
-    var body: some View {
+    private var sizes: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Sizes")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 12) {
+                sizeCard("Ring", store.partner.sizes.ring)
+                sizeCard("Clothing", store.partner.sizes.clothing)
+                sizeCard("Shoe", store.partner.sizes.shoe)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sizeCard(_ label: String, _ value: String) -> some View {
         VStack(spacing: 4) {
-            Text(value.isEmpty ? "?" : value)
+            Text(value.isEmpty ? "—" : value)
                 .font(.title3)
-                .fontWeight(.bold)
+                .fontWeight(.semibold)
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.03), radius: 3)
+        .padding(.vertical, 14)
+        .background(.background, in: RoundedRectangle(cornerRadius: 12))
     }
-}
 
-struct ProfileStatCard: View {
-    let value: String
-    let label: String
-    let icon: String
-    let color: Color
+    // MARK: - Interests
 
-    var body: some View {
+    private var interests: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Interests")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            if store.partner.interests.isEmpty {
+                Text("None added yet")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            } else {
+                WrappingHStack(store.partner.interests, spacing: 8) { interest in
+                    Text(interest.capitalized)
+                        .font(.subheadline)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.pink.opacity(0.08))
+                        .foregroundStyle(.pink)
+                        .clipShape(Capsule())
+                }
+            }
+        }
+    }
+
+    // MARK: - Stats
+
+    private var stats: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Overview")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                stat("\(store.occasions.count)", "Occasions", "calendar", .blue)
+                stat("\(store.allGifts.count)", "Gift Ideas", "lightbulb", .yellow)
+                stat(String(format: "$%.0f", store.totalBudget), "Budget", "dollarsign.circle", .green)
+                stat(String(format: "$%.0f", store.totalSpent), "Spent", "cart", .purple)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func stat(_ value: String, _ label: String, _ icon: String, _ color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .foregroundStyle(color)
@@ -206,67 +174,63 @@ struct ProfileStatCard: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 14)
+        .background(color.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
 // MARK: - Edit Sheet
 
 struct EditPartnerSheet: View {
-    @EnvironmentObject var store: AppStore
-    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var store: Store
+    @Environment(\.dismiss) var dismiss
 
-    @State private var name: String = ""
-    @State private var birthday: Date = Date()
-    @State private var anniversary: Date = Date()
-    @State private var ring: String = ""
-    @State private var clothing: String = ""
-    @State private var shoe: String = ""
-    @State private var selectedInterests: Set<String> = []
+    @State private var name = ""
+    @State private var birthday = Date()
+    @State private var anniversary = Date()
+    @State private var ring = ""
+    @State private var clothing = "M"
+    @State private var shoe = ""
+    @State private var picked: Set<String> = []
 
-    let interestOptions = ["jewelry", "flowers", "skincare", "books", "travel",
-                           "cooking", "fashion", "tech", "fitness", "art", "music", "wine"]
+    private let interestOptions = [
+        "jewelry", "flowers", "skincare", "books", "travel",
+        "cooking", "fashion", "tech", "fitness", "art", "music", "wine"
+    ]
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Basic Info") {
+                Section {
                     TextField("Name", text: $name)
                     DatePicker("Birthday", selection: $birthday, displayedComponents: .date)
                     DatePicker("Anniversary", selection: $anniversary, displayedComponents: .date)
                 }
 
                 Section("Sizes") {
-                    TextField("Ring Size", text: $ring)
+                    TextField("Ring size", text: $ring)
                     Picker("Clothing", selection: $clothing) {
-                        ForEach(["XS", "S", "M", "L", "XL"], id: \.self) { size in
-                            Text(size).tag(size)
-                        }
+                        ForEach(["XS", "S", "M", "L", "XL"], id: \.self) { Text($0).tag($0) }
                     }
-                    TextField("Shoe Size", text: $shoe)
+                    TextField("Shoe size", text: $shoe)
                 }
 
                 Section("Interests") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
-                        ForEach(interestOptions, id: \.self) { interest in
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 8) {
+                        ForEach(interestOptions, id: \.self) { i in
+                            let on = picked.contains(i)
                             Button {
-                                if selectedInterests.contains(interest) {
-                                    selectedInterests.remove(interest)
-                                } else {
-                                    selectedInterests.insert(interest)
-                                }
+                                if on { picked.remove(i) } else { picked.insert(i) }
                             } label: {
-                                Text(interest.capitalized)
+                                Text(i.capitalized)
                                     .font(.caption)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
                                     .frame(maxWidth: .infinity)
-                                    .background(selectedInterests.contains(interest) ? Color.pink : Color(.systemGray5))
-                                    .foregroundStyle(selectedInterests.contains(interest) ? .white : .primary)
-                                    .clipShape(Capsule())
+                                    .padding(.vertical, 8)
+                                    .background(on ? Color.pink : Color(.systemGray6))
+                                    .foregroundStyle(on ? .white : .primary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -278,22 +242,19 @@ struct EditPartnerSheet: View {
                 birthday = store.partner.birthday
                 anniversary = store.partner.anniversary
                 ring = store.partner.sizes.ring
-                clothing = store.partner.sizes.clothing
+                clothing = store.partner.sizes.clothing.isEmpty ? "M" : store.partner.sizes.clothing
                 shoe = store.partner.sizes.shoe
-                selectedInterests = Set(store.partner.interests)
+                picked = Set(store.partner.interests)
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         store.partner.name = name
                         store.partner.birthday = birthday
                         store.partner.anniversary = anniversary
-                        store.partner.sizes = PartnerSizes(ring: ring, clothing: clothing, shoe: shoe)
-                        store.partner.interests = Array(selectedInterests)
-                        store.save()
+                        store.partner.sizes = Sizes(ring: ring, clothing: clothing, shoe: shoe)
+                        store.partner.interests = Array(picked)
                         dismiss()
                     }
                 }
@@ -302,42 +263,57 @@ struct EditPartnerSheet: View {
     }
 }
 
-// MARK: - Flow Layout
+// MARK: - Wrapping HStack
 
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
+struct WrappingHStack<Data: RandomAccessCollection, Content: View>: View where Data.Element: Hashable {
+    let data: Data
+    let spacing: CGFloat
+    let content: (Data.Element) -> Content
+
+    init(_ data: Data, spacing: CGFloat = 8, @ViewBuilder content: @escaping (Data.Element) -> Content) {
+        self.data = data
+        self.spacing = spacing
+        self.content = content
+    }
+
+    var body: some View {
+        _WrappingLayout(spacing: spacing) {
+            ForEach(Array(data), id: \.self) { item in
+                content(item)
+            }
+        }
+    }
+}
+
+struct _WrappingLayout: Layout {
+    var spacing: CGFloat
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        arrangeSubviews(proposal: proposal, subviews: subviews).size
+        layout(proposal: proposal, subviews: subviews).size
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = arrangeSubviews(proposal: proposal, subviews: subviews)
-        for (index, position) in result.positions.enumerated() {
-            subviews[index].place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), proposal: .unspecified)
+        let result = layout(proposal: proposal, subviews: subviews)
+        for (i, pos) in result.positions.enumerated() {
+            subviews[i].place(at: CGPoint(x: bounds.minX + pos.x, y: bounds.minY + pos.y), proposal: .unspecified)
         }
     }
 
-    private func arrangeSubviews(proposal: ProposedViewSize, subviews: Subviews) -> (positions: [CGPoint], size: CGSize) {
-        let maxWidth = proposal.width ?? .infinity
-        var positions: [CGPoint] = []
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        var maxX: CGFloat = 0
+    private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (positions: [CGPoint], size: CGSize) {
+        let maxW = proposal.width ?? .infinity
+        var pts: [CGPoint] = []
+        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0, maxX: CGFloat = 0
 
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth, x > 0 {
-                x = 0
-                y += lineHeight + spacing
-                lineHeight = 0
+        for sv in subviews {
+            let s = sv.sizeThatFits(.unspecified)
+            if x + s.width > maxW, x > 0 {
+                x = 0; y += rowH + spacing; rowH = 0
             }
-            positions.append(CGPoint(x: x, y: y))
-            lineHeight = max(lineHeight, size.height)
-            x += size.width + spacing
+            pts.append(CGPoint(x: x, y: y))
+            rowH = max(rowH, s.height)
+            x += s.width + spacing
             maxX = max(maxX, x)
         }
-        return (positions, CGSize(width: maxX, height: y + lineHeight))
+        return (pts, CGSize(width: maxX, height: y + rowH))
     }
 }

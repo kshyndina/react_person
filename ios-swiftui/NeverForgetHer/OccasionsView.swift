@@ -1,280 +1,225 @@
 import SwiftUI
 
 struct OccasionsView: View {
-    @EnvironmentObject var store: AppStore
-    @State private var showAddOccasion = false
+    @EnvironmentObject var store: Store
+    @State private var showAdd = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    // Hero card for next occasion
-                    if let next = store.nextOccasion {
-                        NextUpCard(occasion: next, partnerName: store.partner.name)
+                LazyVStack(spacing: 0) {
+                    // Next up — hero
+                    if let next = store.upcoming.first {
+                        heroCard(next)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            .padding(.bottom, 20)
                     }
 
-                    // All occasions timeline
-                    ForEach(store.upcomingOccasions) { occasion in
-                        OccasionRow(occasion: occasion)
+                    // Timeline
+                    ForEach(store.upcoming) { occ in
+                        timelineRow(occ)
                     }
                 }
-                .padding()
+                .padding(.bottom, 32)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Upcoming")
             .toolbar {
-                Button {
-                    showAddOccasion = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(.pink)
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showAdd = true } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
-            .sheet(isPresented: $showAddOccasion) {
+            .sheet(isPresented: $showAdd) {
                 AddOccasionSheet()
             }
         }
     }
-}
 
-// MARK: - Next Up Hero Card
+    // MARK: - Hero Card
 
-struct NextUpCard: View {
-    let occasion: Occasion
-    let partnerName: String
+    @ViewBuilder
+    private func heroCard(_ occ: Occasion) -> some View {
+        let color = urgencyColor(occ.urgency)
 
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(urgencyMessage)
+        VStack(spacing: 20) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(occ.urgency.label.uppercased())
                         .font(.caption)
-                        .fontWeight(.bold)
-                        .textCase(.uppercase)
-                        .foregroundStyle(urgencyColor)
+                        .fontWeight(.heavy)
+                        .foregroundStyle(color)
 
-                    Text(occasion.name)
+                    Text(occ.name)
                         .font(.title)
                         .fontWeight(.bold)
 
-                    Text(occasion.formattedDate)
+                    Text(occ.dateFormatted)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                // Countdown circle
+                // Ring countdown
                 ZStack {
                     Circle()
-                        .stroke(urgencyColor.opacity(0.2), lineWidth: 8)
-                        .frame(width: 90, height: 90)
-
+                        .stroke(color.opacity(0.15), lineWidth: 6)
                     Circle()
-                        .trim(from: 0, to: countdownFraction)
-                        .stroke(urgencyColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .frame(width: 90, height: 90)
+                        .trim(from: 0, to: min(1, max(0.02, 1 - Double(occ.daysUntil) / 365)))
+                        .stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-
-                    VStack(spacing: 0) {
-                        Text("\(occasion.daysUntil)")
-                            .font(.system(size: 32, weight: .bold))
+                    VStack(spacing: -2) {
+                        Text("\(occ.daysUntil)")
+                            .font(.system(.title, design: .rounded, weight: .bold))
                         Text("days")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
+                .frame(width: 80, height: 80)
             }
 
-            // Status bar
-            HStack(spacing: 16) {
-                Label(occasion.isPurchased ? "Gift Ready" : "No Gift Yet",
-                      systemImage: occasion.isPurchased ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(occasion.isPurchased ? .green : .orange)
-
+            // Status chips
+            HStack(spacing: 12) {
+                chip(
+                    icon: occ.purchased ? "checkmark.circle.fill" : "circle.dotted",
+                    text: occ.purchased ? "Gift ready" : "No gift yet",
+                    tint: occ.purchased ? .green : .orange
+                )
                 Spacer()
-
-                if let budget = occasion.budget {
-                    Label("Budget: $\(Int(budget))", systemImage: "dollarsign.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Label("\(occasion.giftIdeas.count) ideas", systemImage: "lightbulb.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                chip(icon: "dollarsign.circle", text: "$\(Int(occ.budget))", tint: .secondary)
+                chip(icon: "lightbulb", text: "\(occ.gifts.count) ideas", tint: .secondary)
             }
         }
         .padding(20)
-        .background(
-            LinearGradient(
-                colors: [urgencyColor.opacity(0.08), urgencyColor.opacity(0.02)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: urgencyColor.opacity(0.15), radius: 10)
+        .background(.background, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
     }
 
-    private var urgencyColor: Color {
-        switch occasion.urgencyLevel {
-        case .critical: return .red
-        case .urgent: return .orange
-        case .soon: return .yellow
-        case .upcoming: return .blue
-        case .relaxed: return .green
-        }
+    @ViewBuilder
+    private func chip(icon: String, text: String, tint: Color) -> some View {
+        Label(text, systemImage: icon)
+            .font(.caption)
+            .foregroundStyle(tint)
     }
 
-    private var countdownFraction: Double {
-        let maxDays = 365.0
-        return max(0, 1.0 - Double(occasion.daysUntil) / maxDays)
-    }
+    // MARK: - Timeline Row
 
-    private var urgencyMessage: String {
-        switch occasion.urgencyLevel {
-        case .critical: return "PANIC MODE"
-        case .urgent: return "This week — get moving!"
-        case .soon: return "2 weeks — time to shop"
-        case .upcoming: return "Coming up"
-        case .relaxed: return "You have time"
-        }
-    }
-}
+    @ViewBuilder
+    private func timelineRow(_ occ: Occasion) -> some View {
+        let color = urgencyColor(occ.urgency)
 
-// MARK: - Occasion Row
-
-struct OccasionRow: View {
-    let occasion: Occasion
-
-    private var urgencyColor: Color {
-        switch occasion.urgencyLevel {
-        case .critical: return .red
-        case .urgent: return .orange
-        case .soon: return .yellow
-        case .upcoming: return .blue
-        case .relaxed: return .green
-        }
-    }
-
-    var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 16) {
             // Icon
-            Image(systemName: occasion.icon)
-                .font(.title2)
-                .frame(width: 48, height: 48)
-                .background(urgencyColor.opacity(0.12))
-                .foregroundStyle(urgencyColor)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            Image(systemName: occ.emoji)
+                .font(.body)
+                .frame(width: 40, height: 40)
+                .background(color.opacity(0.1))
+                .foregroundStyle(color)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            // Info
-            VStack(alignment: .leading, spacing: 3) {
-                Text(occasion.name)
-                    .fontWeight(.semibold)
-                Text(occasion.formattedDate)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(occ.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text(occ.dateFormatted)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            // Days countdown
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(occasion.daysUntil)")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundStyle(urgencyColor)
-                Text("days")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            // Purchase status
-            Image(systemName: occasion.isPurchased ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(occasion.isPurchased ? .green : .gray)
+            Text("\(occ.daysUntil)d")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .monospacedDigit()
+                .foregroundStyle(color)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.03), radius: 3)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+
+        Divider().padding(.leading, 76)
+    }
+
+    private func urgencyColor(_ u: Urgency) -> Color {
+        switch u {
+        case .now:       return .red
+        case .thisWeek:  return .orange
+        case .twoWeeks:  return .yellow
+        case .thisMonth: return .blue
+        case .plenty:    return .green
+        }
     }
 }
 
-// MARK: - Add Occasion Sheet
+// MARK: - Add Occasion
 
 struct AddOccasionSheet: View {
-    @EnvironmentObject var store: AppStore
-    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var store: Store
+    @Environment(\.dismiss) var dismiss
+
     @State private var name = ""
     @State private var date = Date()
     @State private var budget: Double = 100
-    @State private var icon = "heart.fill"
+    @State private var emoji = "heart.fill"
 
-    let icons = ["heart.fill", "star.fill", "gift.fill", "birthday.cake.fill",
-                 "flame.fill", "moon.fill", "sun.max.fill", "sparkles"]
+    private let emojis = ["heart.fill", "star.fill", "gift.fill", "birthday.cake.fill",
+                          "flame.fill", "moon.stars.fill", "sun.max.fill", "sparkles",
+                          "figure.stand.dress", "cup.and.saucer.fill"]
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Occasion") {
-                    TextField("Name (e.g. Mother's Day)", text: $name)
+                Section {
+                    TextField("Name", text: $name)
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                 }
 
                 Section("Icon") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 12) {
-                        ForEach(icons, id: \.self) { ic in
-                            Button {
-                                icon = ic
-                            } label: {
-                                Image(systemName: ic)
-                                    .font(.title2)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                        ForEach(emojis, id: \.self) { e in
+                            Button { emoji = e } label: {
+                                Image(systemName: e)
+                                    .font(.title3)
                                     .frame(width: 44, height: 44)
-                                    .background(icon == ic ? Color.pink : Color(.systemGray5))
-                                    .foregroundStyle(icon == ic ? .white : .primary)
+                                    .background(emoji == e ? Color.pink : Color(.systemGray5))
+                                    .foregroundStyle(emoji == e ? .white : .primary)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
 
-                Section("Budget") {
+                Section {
                     HStack {
+                        Text("Budget")
                         Slider(value: $budget, in: 25...1000, step: 25)
-                        Text("$\(Int(budget))")
-                            .fontWeight(.semibold)
-                            .frame(width: 60)
+                        Text("$\(Int(budget))").monospacedDigit().frame(width: 50)
                     }
                 }
             }
             .navigationTitle("New Occasion")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        let occasion = Occasion(
-                            name: name,
-                            icon: icon,
-                            date: date,
-                            isRecurring: true,
-                            isCustom: true,
-                            reminderDaysBefore: [14, 7, 3, 1],
-                            budget: budget,
-                            giftIdeas: [],
-                            isPurchased: false
-                        )
-                        store.addOccasion(occasion)
+                        store.occasions.append(Occasion(
+                            name: name, emoji: emoji, date: date,
+                            isCustom: true, reminderDays: [14,7,3,1],
+                            budget: budget, gifts: []
+                        ))
+                        Notifier.scheduleAll(store.occasions, name: store.partner.name)
                         dismiss()
                     }
                     .disabled(name.isEmpty)
                 }
             }
         }
+        .presentationDetents([.medium, .large])
     }
 }
